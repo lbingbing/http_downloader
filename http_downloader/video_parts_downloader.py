@@ -10,22 +10,22 @@ def download_parts(task, mp):
         return True
     else:
         print('downloading video {} parts'.format(task.dir_path))
-        success = False
         if mp:
-            success = http_downloader.download_urls(task.part_urls, task.dir_path, file_name_pattern=('p', '.' + task.ext, 1), worker_num=mp)
+            enc_suffix = '' if task.key is None else '_enc'
+            success = http_downloader.download_urls(task.part_urls, task.dir_path, file_name_pattern=('p', enc_suffix + '.' + task.ext, 1), worker_num=mp)
         else:
             success = True
             for part_id, url in enumerate(task.part_urls, 1):
                 part_path = os.path.join(task.dir_path, 'p{}.{}'.format(part_id, task.ext))
-                print('downloading part {}/{}'.format(part_id, len(task.part_urls)))
+                print('downloading part {}/{}'.format(part_id, task.get_part_num()))
                 if os.path.isfile(part_path):
-                    print(term_color.yellow('part {}/{} already exists'.format(part_id, len(task.part_urls))))
+                    print(term_color.yellow('part {}/{} already exists'.format(part_id, task.get_part_num())))
                 else:
                     try:
                         http_downloader.download_url(url, part_path, verbose=True)
                     except Exception as e:
                         print(term_color.red(e))
-                        print(term_color.red('fail to download part {}/{}'.format(part_id, len(task.part_urls))))
+                        print(term_color.red('fail to download part {}/{}'.format(part_id, task.get_part_num())))
                         success = False
         if success:
             task.download_done = True

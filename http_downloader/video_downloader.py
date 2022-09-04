@@ -2,6 +2,7 @@ import os
 
 from . import video_task
 from . import video_parts_downloader
+from . import video_parts_decrypt
 from . import video_parts_merge
 from . import term_color
 
@@ -13,6 +14,7 @@ if __name__ == '__main__':
     parser.add_argument('--mp', type=int, default=0, help='multiprocessing')
     parser.add_argument('--ffmpeg_path', help='ffmpeg path, use ffmpeg concat')
     parser.add_argument('--clean', action='store_true', help='clean up on success')
+    parser.add_argument('--ignore_error', action='store_true', help='ignore_error')
     args = parser.parse_args()
 
     start_video_id, end_video_id = map(int, args.video_id_range.split(','))
@@ -29,7 +31,9 @@ if __name__ == '__main__':
                 success = video_parts_downloader.download_parts(task, args.mp)
                 if success:
                     break
-            success = success and video_parts_merge.merge_parts(task, args.ffmpeg_path, args.clean)
+            if task.key is not None:
+                success = success and video_parts_decrypt.decrypt_parts(task, args.mp, args.clean)
+            success = success and video_parts_merge.merge_parts(task, args.ffmpeg_path, args.clean, args.ignore_error)
             if success:
                 print(term_color.green('video {} success'.format(video_id)))
                 success_video_ids.append(video_id)
