@@ -6,7 +6,7 @@ from . import video_task
 from . import term_color
 
 def get_legal_name(name):
-    return name.replace('/', '-')
+    return name.replace('/', '-').replace('\\', '-').replace(':', '-').replace('*', '-').replace('?', '-').replace('"', '-').replace('<', '-').replace('>', '-').replace('|', '-').split('\n')[0].strip()
 
 def merge_parts(task, ffmpeg_path, clean=False, ignore_error=False):
     if task.merge_done:

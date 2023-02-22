@@ -1,5 +1,6 @@
 import os
 import json
+import urllib.parse
 
 from . import http_downloader
 
@@ -16,7 +17,7 @@ class VideoTask:
         self.merge_done = None
 
     def init(self, name, ext, key, part_urls):
-        assert all(e.endswith(ext) for e in part_urls), 'inconsistent ext and part_urls'
+        assert all(urllib.parse.urlparse(e).path.endswith(ext) for e in part_urls), 'inconsistent ext and part_urls'
         if not os.path.isdir(self.dir_path):
             os.mkdir(self.dir_path)
         self.name = name
@@ -64,15 +65,15 @@ class VideoTask:
 
 def get_m3u8_part_urls(host, m3u8_content, m3u8_file, m3u8_url, indirect_url):
     if m3u8_content:
-        lines = m3u8_content.split('\n')
+        lines = m3u8_content.splitlines()
     elif m3u8_file:
         with open(m3u8_file) as f:
-            lines = f.read().split('\n')
+            lines = f.read().splitlines()
     elif m3u8_url:
         url = m3u8_url
         if host:
             url = host + url
-        lines = http_downloader.get_remote_data(url).decode().split('\n')
+        lines = http_downloader.get_remote_data(url).decode().splitlines()
     else:
         assert 0
 
@@ -82,9 +83,9 @@ def get_m3u8_part_urls(host, m3u8_content, m3u8_file, m3u8_url, indirect_url):
         url = part_urls[0]
         if host:
             url = host + url
-        lines = http_downloader.get_remote_data(url).decode().split('\n')
+        lines = http_downloader.get_remote_data(url).decode().splitlines()
 
-    part_urls = [line for line in lines if line.endswith('ts')]
+    part_urls = [line for line in lines if urllib.parse.urlparse(line).path.endswith('ts')]
     if host:
         part_urls = [host + e for e in part_urls]
 
@@ -95,6 +96,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('task_dir', help='task dir')
+    parser.add_argument('video_name', help='video name')
     src_group = parser.add_mutually_exclusive_group(required=True)
     src_group.add_argument('--m3u8_file', help='m3u8 file')
     src_group.add_argument('--m3u8_url', help='m3u8 url')
@@ -102,5 +104,7 @@ if __name__ == '__main__':
     parser.add_argument('--host', help='host')
     args = parser.parse_args()
 
-    part_urls = get_m3u8_part_urls(args.host, None, args.m3u8_file, args.m3u8_url, args.indirect)
-    gen_task(args.task_dir, part_urls)
+    part_urls = get_m3u8_part_urls(args.host, None, args.m3u8_file, args.m3u8_url, args.indirect_url)
+    task = VideoTask(args.task_dir)
+    task.init(args.video_name, 'ts', None, part_urls)
+    task.flush()

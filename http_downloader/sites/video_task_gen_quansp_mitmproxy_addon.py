@@ -33,7 +33,7 @@ class Logger:
                 part_urls = [e.strip() for e in response_str.split('\n')]
                 part_urls = list(filter(lambda e: e.startswith('http'), part_urls))
                 task = video_task.VideoTask(dir_path)
-                task.init(None, 'ts', part_urls)
+                task.init(str(self.id), 'ts', None, part_urls)
                 task.flush()
                 with open(os.path.join(dir_path, 'info.txt'), 'w', encoding='utf-8') as f:
                     print('url:', file=f)
