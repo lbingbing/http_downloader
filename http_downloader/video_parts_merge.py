@@ -8,23 +8,23 @@ from . import term_color
 def get_legal_name(name):
     return name.replace('/', '-').replace('\\', '-').replace(':', '-').replace('*', '-').replace('?', '-').replace('"', '-').replace('<', '-').replace('>', '-').replace('|', '-').split('\n')[0].strip()
 
-def merge_parts(task, ffmpeg_path, clean=False, ignore_error=False):
+def merge_parts(task, use_ffmpeg, clean=False, ignore_error=False):
     if task.merge_done:
         print(term_color.yellow('video {} parts merge already done'.format(task.dir_path)))
-        
+
         return True
     else:
         print('merge video {} parts'.format(task.dir_path))
         part_ids = task.get_part_ids()
         video_parts = [os.path.join(task.dir_path, task.get_part_file_name(part_id)) for part_id in part_ids]
         video_file_path = '{}.{}'.format(task.dir_path, task.ext)
-        if ffmpeg_path:
+        if use_ffmpeg:
             list_file = '{}.list'.format(task.dir_path)
             with open(list_file, 'w') as f:
                 f.write('\n'.join(['file {}'.format(e.replace('\\', '/')) for e in video_parts]))
             success = True
             try:
-                cmd = ['{}/ffmpeg'.format(ffmpeg_path), '-f', 'concat', '-i', list_file, '-c', 'copy', video_file_path]
+                cmd = ['ffmpeg', '-f', 'concat', '-i', list_file, '-c', 'copy', video_file_path]
                 if not ignore_error:
                     cmd.append('-xerror')
                 subprocess.run(cmd, check=True)
@@ -61,7 +61,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('video_id_range', help='video id range, e.g. 1,2')
-    parser.add_argument('--ffmpeg_path', help='ffmpeg path, use ffmpeg concat')
+    parser.add_argument('--use_ffmpeg', action='store_ture', help='use ffmpeg concat')
     parser.add_argument('--clean', action='store_true', help='clean up on success')
     parser.add_argument('--ignore_error', action='store_true', help='ignore_error')
     args = parser.parse_args()
@@ -75,7 +75,7 @@ if __name__ == '__main__':
         if os.path.isdir(str(video_id)):
             task = video_task.VideoTask(str(video_id))
             task.load()
-            success = merge_parts(task, args.ffmpeg_path, args.clean, args.ignore_error)
+            success = merge_parts(task, args.use_ffmpeg, args.clean, args.ignore_error)
             if success:
                 print(term_color.green('video {} success'.format(video_id)))
                 success_video_ids.append(video_id)

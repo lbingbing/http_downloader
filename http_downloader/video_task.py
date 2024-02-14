@@ -72,7 +72,7 @@ def get_m3u8_part_urls(host, m3u8_content, m3u8_file, m3u8_url, indirect_url):
     elif m3u8_url:
         url = m3u8_url
         if host:
-            url = host + url
+            url = host + '/' + url
         lines = http_downloader.get_remote_data(url).decode().splitlines()
     else:
         assert 0
@@ -82,12 +82,12 @@ def get_m3u8_part_urls(host, m3u8_content, m3u8_file, m3u8_url, indirect_url):
         assert len(part_urls) == 1
         url = part_urls[0]
         if host:
-            url = host + url
+            url = host + '/' + url
         lines = http_downloader.get_remote_data(url).decode().splitlines()
 
     part_urls = [line for line in lines if urllib.parse.urlparse(line).path.endswith('ts')]
     if host:
-        part_urls = [host + e for e in part_urls]
+        part_urls = [host + '/' + e for e in part_urls]
 
     return part_urls
 
